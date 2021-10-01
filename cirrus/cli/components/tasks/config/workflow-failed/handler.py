@@ -16,7 +16,7 @@ statedb = StateDB()
 
 def handler(payload, context):
     catalog = Catalog.from_payload(payload)
-    logger = get_task_logger(f"{__name__}.workflow-failed", catalog=catalog)
+    logger = get_task_logger(f"task.workflow-failed", catalog=catalog)
 
     # parse errors
     error = payload.get('error', {})
