@@ -10,29 +10,13 @@ INVALID_TOPIC_ARN = getenv('CIRRUS_INVALID_TOPIC_ARN', None)
 
 # boto3 clients
 SNS_CLIENT = boto3.client('sns')
-LOG_CLIENT = boto3.client('logs')
 
 # Cirrus state database
 statedb = StateDB()
 
-
-def get_error_from_batch(logname):
-    try:
-        logs = LOG_CLIENT.get_log_events(logGroupName='/aws/batch/job', logStreamName=logname)
-        msg = logs['events'][-1]['message'].lstrip('cirruslib.errors.')
-        parts = msg.split(':', maxsplit=1)
-        if len(parts) > 1:
-            error_type = parts[0]
-            msg = parts[1]
-            return error_type, msg
-        return "Unknown", msg
-    except Exception:
-        return "Exception", "Unable to get Error Log"
-
-
 def handler(payload, context):
     catalog = Catalog.from_payload(payload)
-    logger = get_task_logger("task.workflow-failed", catalog=catalog)
+    logger = get_task_logger(f"{__name__}.workflow-failed", catalog=catalog)
 
     # parse errors
     error = payload.get('error', {})
@@ -46,16 +30,6 @@ def handler(payload, context):
         error_msg = 'unknown'
         if 'errorMessage' in cause:
             error_msg = cause.get('errorMessage', 'unknown')
-        elif 'Attempts' in cause:
-            try:
-                # batch
-                reason = cause['Attempts'][-1]['StatusReason']
-                if 'Essential container in task exited' in reason:
-                    # get the message from batch logs
-                    logname = cause['Attempts'][-1]['Container']['LogStreamName']
-                    error_type, error_msg = get_error_from_batch(logname)
-            except Exception as err:
-                logger.error(err, exc_info=True)
     except Exception:
         error_msg = error['Cause']
 
