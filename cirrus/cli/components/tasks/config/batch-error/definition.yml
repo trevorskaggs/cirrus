@@ -1,0 +1,4 @@
+description: For Batch Job failures, retrive exception from logs and throw within the StepFunction context
+lambda:
+  memorySize: 128
+  timeout: 15
