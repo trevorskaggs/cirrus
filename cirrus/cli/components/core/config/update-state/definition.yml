@@ -1,0 +1,5 @@
+description: update the cirrus database with the execution state
+lambda:
+  memorySize: 128
+  timeout: 900
+  # TODO: events for state machine state changes
